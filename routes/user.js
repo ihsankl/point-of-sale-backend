@@ -56,9 +56,19 @@ router.delete("/:id", auth, admin, async (req, res, next) => {
 router.put("/:id", auth, admin, async (req, res, next) => {
   const { id } = req.params;
   const { username, password, role, fullname = "-", contact = "-" } = req.body;
-  const query = knex("User").where({ id }).update({ username, password, role, fullname, contact });
-  const result = await helper.knexQuery(query);
-  res.status(result.status).send(result);
+  const alreadyExists = await knex("User").where({ username });
+
+  if (!alreadyExists) {
+    const query = knex("User").where({ id }).update({ username, password, role, fullname, contact });
+    const result = await helper.knexQuery(query);
+    res.status(result.status).send(result);
+  } else {
+    res.status(503).send({
+      status: 503,
+      data: null,
+      message: "User already exists!"
+    });
+  }
 });
 
 // get all users
