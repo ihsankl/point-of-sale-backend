@@ -9,39 +9,20 @@ router.post("/", async (req, res, next) => {
   const { username, password, role } = req.body;
   const hash = helper.encrypt(password);
 
-  const alreadyExists = await knex("User").where({ username });
-
-  if (!alreadyExists) {
-    const query = knex("User").insert({ username, password: hash, role });
-    const result = await helper.knexQuery(query);
-    res.status(result.status).send(result);
-  } else {
-    res.status(503).send({
-      status: 503,
-      data: null,
-      message: "User already exists!"
-    });
-  }
-
-  // example using commit and rollback
-  // try {
-  //   const query = knex.transaction(async trx => {
-  //     const hash = helper.encrypt(password);
-  //     try {
-  //       await trx("User").insert({ username, password: hash, role })
-  //       await trx.commit()
-  //     } catch (error) {
-  //       trx.rollback();
-  //     }
-  //   })
-  //   res.status(201).send("User created");
-  //   if (query) {
-  //   }
-  // } catch (error) {
-  //   console.log(`\x1b[0m[LOG] ${error.message}`);
-  //   res.status(500).send(error.message);
-  // }
-
+  const query = knex.transaction(async (trx) => {
+    try {
+      const alreadyExists = await trx("User").where({ username });
+      if (!alreadyExists.length > 0) {
+        return await trx("User").insert({ username, password: hash, role });
+      } else {
+        throw new Error("User already exists");
+      }
+    } catch (error) {
+      throw new Error(error);
+    }
+  });
+  const result = await helper.knexQuery(query);
+  res.status(result.status).send(result);
 });
 
 // delete user
@@ -56,19 +37,23 @@ router.delete("/:id", auth, admin, async (req, res, next) => {
 router.put("/:id", auth, admin, async (req, res, next) => {
   const { id } = req.params;
   const { username, password, role, fullname = "-", contact = "-" } = req.body;
-  const alreadyExists = await knex("User").where({ username });
 
-  if (!alreadyExists) {
-    const query = knex("User").where({ id }).update({ username, password, role, fullname, contact });
-    const result = await helper.knexQuery(query);
-    res.status(result.status).send(result);
-  } else {
-    res.status(503).send({
-      status: 503,
-      data: null,
-      message: "User already exists!"
-    });
-  }
+  const hash = helper.encrypt(password);
+
+  const query = knex.transaction(async (trx) => {
+    try {
+      const alreadyExists = await trx("User").where({ username });
+      if (!alreadyExists.length > 0) {
+        return await trx("User").where({ id }).update({ username, password: hash, role, fullname, contact });
+      } else {
+        throw new Error("User already exists");
+      }
+    } catch (error) {
+      throw new Error(error);
+    }
+  });
+  const result = await helper.knexQuery(query);
+  res.status(result.status).send(result);
 });
 
 // get all users
