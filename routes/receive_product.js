@@ -22,7 +22,7 @@ router.post("/", auth, async (req, res, next) => {
 });
 
 // get receive product with pagination filtered by received_date
-router.get("pagination", auth, async (req, res, next) => {
+router.get("/pagination", auth, async (req, res, next) => {
     const { page, limit, date_from, date_to, } = req.query;
     const query = knex
         .select(

@@ -13,7 +13,7 @@ router.post("/", auth, async (req, res, next) => {
 });
 
 // get invoice with pagination and filtered by date_recorded
-router.get("/", auth, async (req, res, next) => {
+router.get("/pagination", auth, async (req, res, next) => {
     const { page, limit, date_from, date_to } = req.query;
     const query = knex("Invoice")
         .select("*")
