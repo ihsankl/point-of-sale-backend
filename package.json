@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/lorenzhohmann/rest-template#readme",
   "dependencies": {
-    "bcrypt": "^5.0.1",
+    "bcryptjs": "latest",
     "cors": "^2.8.5",
     "dayjs": "^1.10.7",
     "dotenv": "^9.0.2",
