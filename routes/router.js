@@ -12,7 +12,7 @@ router.use("*", (req, res, next) => {
 });
 
 // add single router files
-const routeFiles = ["user", "authentication", "product", "category", "product_unit", "supplier", "receive_product", "sales"];
+const routeFiles = ["user", "authentication", "product", "category", "product_unit", "supplier", "receive_product", "sales", "testing"];
 routeFiles.forEach((route) => {
   let routeFile = require(`./${route}.js`);
   try {
