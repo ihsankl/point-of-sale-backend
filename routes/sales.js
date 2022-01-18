@@ -54,7 +54,7 @@ router.get('/pagination', auth, async (req, res, next) => {
           'a.*',
           'b.total_amount',
           'b.amount_tendered',
-          'b.date_recorder',
+          'b.date_recorded',
           'c.name',
       )
       .from('Sales')
@@ -83,7 +83,7 @@ router.get('/', auth, async (req, res, next) => {
           'a.*',
           'b.total_amount',
           'b.amount_tendered',
-          'b.date_recorder',
+          'b.date_recorded',
           'c.name',
       )
       .from('Sales as a')
@@ -101,7 +101,7 @@ router.get('/:id', auth, async (req, res, next) => {
           'a.*',
           'b.total_amount',
           'b.amount_tendered',
-          'b.date_recorder',
+          'b.date_recorded',
           'c.name',
       )
       .from('Sales as a')

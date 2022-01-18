@@ -79,7 +79,7 @@ router.get('/', auth, async (req, res, next) => {
           'b.name as product_name',
           'c.name as supplier_name',
       )
-      .from('Receive Product')
+      .from('Receive Product as a')
       .leftJoin('Product as b', 'a.product_id', 'b.id')
       .leftJoin('Supplier as c', 'a.supplier_id', 'c.id');
   const result = await helper.knexQuery(query, 'getAllReceiveProducts');
