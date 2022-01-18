@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: db
--- Generation Time: Dec 30, 2021 at 04:02 AM
+-- Generation Time: Jan 16, 2022 at 04:10 AM
 -- Server version: 10.6.5-MariaDB-1:10.6.5+maria~focal
 -- PHP Version: 7.4.27
 
@@ -27,7 +27,7 @@ SET time_zone = "+00:00";
 -- Table structure for table `Customer`
 --
 
-CREATE TABLE `Customer` (
+CREATE TABLE IF NOT EXISTS `Product_Customer` (
   `id` int(11) NOT NULL,
   `code` varchar(255) DEFAULT NULL,
   `name` varchar(255) DEFAULT NULL,
@@ -41,7 +41,7 @@ CREATE TABLE `Customer` (
 -- Table structure for table `Invoice`
 --
 
-CREATE TABLE `Invoice` (
+CREATE TABLE IF NOT EXISTS `Invoice` (
   `id` int(11) NOT NULL,
   `total_amount` int(11) UNSIGNED NOT NULL DEFAULT 0,
   `amount_tendered` int(11) UNSIGNED NOT NULL DEFAULT 0,
@@ -56,10 +56,11 @@ CREATE TABLE `Invoice` (
 -- Table structure for table `Product`
 --
 
-CREATE TABLE `Product` (
+CREATE TABLE IF NOT EXISTS `Product` (
   `id` int(11) NOT NULL,
   `code` varchar(255) NOT NULL,
   `name` varchar(255) NOT NULL,
+  `expired_date` date NOT NULL,
   `unit_in_stock` int(11) UNSIGNED NOT NULL DEFAULT 0,
   `disc_percentage` int(11) UNSIGNED NOT NULL DEFAULT 0,
   `unit_price` int(11) UNSIGNED NOT NULL DEFAULT 0,
@@ -75,7 +76,7 @@ CREATE TABLE `Product` (
 -- Table structure for table `Product Category`
 --
 
-CREATE TABLE `Product Category` (
+CREATE TABLE IF NOT EXISTS `Product Category` (
   `id` int(11) NOT NULL,
   `name` varchar(255) NOT NULL DEFAULT '-'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -86,7 +87,7 @@ CREATE TABLE `Product Category` (
 -- Table structure for table `Product Unit`
 --
 
-CREATE TABLE `Product Unit` (
+CREATE TABLE IF NOT EXISTS `Product Unit` (
   `id` int(11) NOT NULL,
   `name` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -97,7 +98,7 @@ CREATE TABLE `Product Unit` (
 -- Table structure for table `Purchase Order`
 --
 
-CREATE TABLE `Purchase Order` (
+CREATE TABLE IF NOT EXISTS `Purchase Order` (
   `id` int(11) NOT NULL,
   `qty` int(11) UNSIGNED NOT NULL,
   `sub_total` int(11) UNSIGNED NOT NULL,
@@ -114,7 +115,7 @@ CREATE TABLE `Purchase Order` (
 -- Table structure for table `Receive Product`
 --
 
-CREATE TABLE `Receive Product` (
+CREATE TABLE IF NOT EXISTS `Receive Product` (
   `id` int(11) NOT NULL,
   `qty` int(11) UNSIGNED NOT NULL,
   `unit_price` int(11) UNSIGNED NOT NULL,
@@ -131,7 +132,7 @@ CREATE TABLE `Receive Product` (
 -- Table structure for table `Revoked Tokens`
 --
 
-CREATE TABLE `Revoked Tokens` (
+CREATE TABLE IF NOT EXISTS `Revoked Tokens` (
   `id` int(11) NOT NULL,
   `token` text NOT NULL,
   `signed_out` tinyint(1) NOT NULL DEFAULT 0
@@ -143,7 +144,7 @@ CREATE TABLE `Revoked Tokens` (
 -- Table structure for table `Sales`
 --
 
-CREATE TABLE `Sales` (
+CREATE TABLE IF NOT EXISTS `Sales` (
   `id` int(11) NOT NULL,
   `qty` int(11) UNSIGNED NOT NULL DEFAULT 0,
   `unit_price` int(11) UNSIGNED NOT NULL DEFAULT 0,
@@ -158,7 +159,7 @@ CREATE TABLE `Sales` (
 -- Table structure for table `Supplier`
 --
 
-CREATE TABLE `Supplier` (
+CREATE TABLE IF NOT EXISTS `Supplier` (
   `id` int(11) NOT NULL,
   `code` varchar(255) DEFAULT NULL,
   `name` varchar(255) NOT NULL,
@@ -173,7 +174,7 @@ CREATE TABLE `Supplier` (
 -- Table structure for table `User`
 --
 
-CREATE TABLE `User` (
+CREATE TABLE IF NOT EXISTS `User` (
   `id` int(11) NOT NULL,
   `username` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
@@ -272,31 +273,31 @@ ALTER TABLE `User`
 -- AUTO_INCREMENT for table `Customer`
 --
 ALTER TABLE `Customer`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- AUTO_INCREMENT for table `Invoice`
 --
 ALTER TABLE `Invoice`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `Product`
 --
 ALTER TABLE `Product`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `Product Category`
 --
 ALTER TABLE `Product Category`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `Product Unit`
 --
 ALTER TABLE `Product Unit`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `Purchase Order`
@@ -308,13 +309,13 @@ ALTER TABLE `Purchase Order`
 -- AUTO_INCREMENT for table `Receive Product`
 --
 ALTER TABLE `Receive Product`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `Revoked Tokens`
 --
 ALTER TABLE `Revoked Tokens`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `Sales`
@@ -326,13 +327,13 @@ ALTER TABLE `Sales`
 -- AUTO_INCREMENT for table `Supplier`
 --
 ALTER TABLE `Supplier`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `User`
 --
 ALTER TABLE `User`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- Constraints for dumped tables

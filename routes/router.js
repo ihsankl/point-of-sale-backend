@@ -1,4 +1,5 @@
-const express = require("express");
+const express = require('express');
+// eslint-disable-next-line new-cap
 const router = express.Router();
 
 /**
@@ -6,15 +7,28 @@ const router = express.Router();
  */
 
 // log requests
-router.use("*", (req, res, next) => {
+router.use('*', (req, res, next) => {
   console.log(`\x1b[32m${req.method}\x1b[35m ${req.baseUrl}`);
   next();
 });
 
 // add single router files
-const routeFiles = ["user", "authentication", "product", "category", "product_unit", "supplier", "receive_product", "sales", "testing"];
+const routeFiles = [
+  'user',
+  'authentication',
+  'product',
+  'category',
+  'product_unit',
+  'supplier',
+  'receive_product',
+  'sales',
+  'testing',
+  'customer',
+  'invoice',
+  'purchase_order',
+];
 routeFiles.forEach((route) => {
-  let routeFile = require(`./${route}.js`);
+  const routeFile = require(`./${route}.js`);
   try {
     router.use(`/${route}`, routeFile);
   } catch (err) {
