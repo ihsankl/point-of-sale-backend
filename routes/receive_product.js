@@ -48,11 +48,7 @@ router.get('/pagination', auth, async (req, res, next) => {
   const {page, limit, date_from, date_to} = req.query;
   const query = knex
       .select(
-          'a.qty',
-          'a.unit_price',
-          'a.sub_total',
-          'a.received_date',
-          'a.product_id',
+          'a.*',
           'b.name as product_name',
           'c.name as supplier_name',
       )
@@ -77,7 +73,15 @@ router.get('/pagination', auth, async (req, res, next) => {
 
 // get all receive products
 router.get('/', auth, async (req, res, next) => {
-  const query = knex('Receive Product').select('*');
+  const query = knex
+      .select(
+          'a.*',
+          'b.name as product_name',
+          'c.name as supplier_name',
+      )
+      .from('Receive Product')
+      .leftJoin('Product as b', 'a.product_id', 'b.id')
+      .leftJoin('Supplier as c', 'a.supplier_id', 'c.id');
   const result = await helper.knexQuery(query, 'getAllReceiveProducts');
   res.status(result.status).send(result);
 });
@@ -85,7 +89,16 @@ router.get('/', auth, async (req, res, next) => {
 // get 1 receive product
 router.get('/:id', auth, async (req, res, next) => {
   const {id} = req.params;
-  const query = knex('Receive Product').where({id});
+  const query = knex
+      .select(
+          'a.*',
+          'b.name as product_name',
+          'c.name as supplier_name',
+      )
+      .from('Receive Product')
+      .leftJoin('Product as b', 'a.product_id', 'b.id')
+      .leftJoin('Supplier as c', 'a.supplier_id', 'c.id')
+      .where({id});
   const result = await helper.knexQuery(query);
   res.status(result.status).send(result);
 });

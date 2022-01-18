@@ -32,10 +32,7 @@ router.get('/pagination', auth, async (req, res, next) => {
   const {page, limit, date_from, date_to} = req.query;
   const query = knex
       .select(
-          'a.id',
-          'a.total_amount',
-          'a.amount_tendered',
-          'a.date_recorded',
+          'a.*',
           'b.username as user_name',
           'c.name as customer',
       )
@@ -61,10 +58,7 @@ router.get('/pagination', auth, async (req, res, next) => {
 router.get('/', auth, async (req, res, next) => {
   const query = knex
       .select(
-          'a.id',
-          'a.total_amount',
-          'a.amount_tendered',
-          'a.date_recorded',
+          'a.*',
           'b.username as user_name',
           'c.name as customer',
       )
@@ -80,10 +74,7 @@ router.get('/:id', auth, async (req, res, next) => {
   const {id} = req.params;
   const query = knex
       .select(
-          'a.id',
-          'a.total_amount',
-          'a.amount_tendered',
-          'a.date_recorded',
+          'a.*',
           'b.username as user_name',
           'c.name as customer',
       )

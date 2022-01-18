@@ -42,16 +42,8 @@ router.get('/pagination', auth, async (req, res, next) => {
   const {page, limit, name = '', category_id = 0} = req.query;
   const query = knex
       .select(
+          'a.*',
           'a.id as product_id',
-          'a.code',
-          'a.name',
-          'a.unit_in_stock',
-          'a.disc_percentage',
-          'a.unit_price',
-          'a.re_order_level',
-          'a.unit_id',
-          'a.category_id',
-          'a.user_id',
           'b.name as unit_name',
           'c.name as category_name',
           'd.username',
@@ -83,14 +75,8 @@ router.get('/pagination', auth, async (req, res, next) => {
 router.get('/', auth, async (req, res, next) => {
   const query = knex
       .select(
+          'a.*',
           'a.id as product_id',
-          'a.id',
-          'a.code',
-          'a.name',
-          'a.unit_in_stock',
-          'a.disc_percentage',
-          'a.unit_price',
-          'a.re_order_level',
           'b.name as unit_name',
           'c.name as category_name',
           'd.username',
@@ -109,12 +95,7 @@ router.get('/:id', auth, async (req, res, next) => {
   const query = knex
       .select(
           'a.id as product_id',
-          'a.code',
-          'a.name',
-          'a.unit_in_stock',
-          'a.disc_percentage',
-          'a.unit_price',
-          'a.re_order_level',
+          'a.*',
           'b.name as unit_name',
           'c.name as category_name',
           'd.username',

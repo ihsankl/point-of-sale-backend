@@ -35,11 +35,7 @@ router.post('/', auth, async (req, res, next) => {
 router.get('/', auth, async (req, res, next) => {
   const query = knex
       .select(
-          'a.id',
-          'a.qty',
-          'a.sub_total',
-          'a.order_date',
-          'a.unit_price',
+          'a.*',
           'b.username as user_name',
           'c.name as supplier',
       )
@@ -54,8 +50,15 @@ router.get('/', auth, async (req, res, next) => {
 router.get('/pagination', auth, async (req, res, next) => {
   const {date_from, date_to, page, limit} = req.query;
   const offset = (page - 1) * limit;
-  const query = knex('Purchase Order')
-      .select('*')
+  const query = knex
+      .select(
+          'a.*',
+          'b.username as user_name',
+          'c.name as supplier',
+      )
+      .from('Purchase Order as a')
+      .leftJoin('User as b', 'a.user_id', 'b.id')
+      .leftJoin('Supplier as c', 'a.supplier_id', 'c.id')
       .whereBetween('order_date', [date_from, date_to])
       .offset(offset)
       .limit(limit);
@@ -75,7 +78,15 @@ router.get('/pagination', auth, async (req, res, next) => {
 // get 1 purchase order
 router.get('/:id', auth, async (req, res, next) => {
   const {id} = req.params;
-  const query = knex('Purchase Order').where({id});
+  const query = knex
+      .select(
+          'a.*',
+          'b.username as user_name',
+          'c.name as supplier',
+      )
+      .leftJoin('User as b', 'a.user_id', 'b.id')
+      .leftJoin('Supplier as c', 'a.supplier_id', 'c.id')
+      .where({id});
   const result = await helper.knexQuery(query);
   res.status(result.status).send(result);
 });
