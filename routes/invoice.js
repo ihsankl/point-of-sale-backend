@@ -109,4 +109,14 @@ router.put('/:id', auth, async (req, res, next) => {
   res.status(result.status).send(result);
 });
 
+// delete invoice
+router.delete('/:id', auth, async (req, res, next) => {
+  const {id} = req.params;
+  const query = knex('Invoice')
+      .where({id})
+      .del();
+  const result = await helper.knexQuery(query);
+  res.status(result.status).send(result);
+});
+
 module.exports = router;
