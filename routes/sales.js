@@ -28,7 +28,8 @@ router.post('/', auth, async (req, res, next) => {
             customer_id,
           }).into('Invoice');
       await trx('Product')
-          .update({unit_in_stock: knex.raw('unit_in_stock - ?', qty)});
+          .update({unit_in_stock: knex.raw('unit_in_stock - ?', qty)})
+          .where({id: product_id});
       return await trx
           .insert({
             qty,
