@@ -16,6 +16,8 @@ router.post('/', auth, async (req, res, next) => {
     product_id,
     user_id,
     customer_id,
+    date_recorded = dayjs(new Date()).format('YYYY-MM-DD'),
+    invoice_id,
   } = req.body;
   const query = knex.transaction(async (trx) => {
     try {
@@ -23,7 +25,7 @@ router.post('/', auth, async (req, res, next) => {
           .insert({
             total_amount: sub_total,
             amount_tendered: 0,
-            date_recorded: dayjs(new Date()).format('YYYY-MM-DD'),
+            date_recorded,
             user_id,
             customer_id,
           }).into('Invoice');
@@ -35,7 +37,7 @@ router.post('/', auth, async (req, res, next) => {
             qty,
             unit_price,
             sub_total,
-            invoice_id: invoiceId[0],
+            invoice_id: invoice_id ?? invoiceId[0],
             product_id,
           }).into('Sales');
     } catch (error) {
