@@ -15,6 +15,7 @@ router.post('/', auth, async (req, res, next) => {
     customer_id,
     date_recorded = dayjs(new Date()).format('YYYY-MM-DD'),
     invoice_id,
+    amount_tendered,
   } = req.body;
   const query = knex.transaction(async (trx) => {
     try {
@@ -23,7 +24,7 @@ router.post('/', auth, async (req, res, next) => {
       const invoiceId = await trx('Invoice')
           .insert({
             total_amount,
-            amount_tendered: 0,
+            amount_tendered,
             date_recorded,
             user_id,
             customer_id,
@@ -33,7 +34,7 @@ router.post('/', auth, async (req, res, next) => {
         const x = trx('Product')
             .update({unit_in_stock: knex.raw('unit_in_stock - ?', v.qty)})
             .where({id: v.product_id});
-        const y =trx('Sales')
+        const y = trx('Sales')
             .insert({
               qty: v.qty,
               unit_price: v.unit_price,
@@ -44,8 +45,6 @@ router.post('/', auth, async (req, res, next) => {
         promises.push(x, y);
       });
       return await Promise.all(promises);
-      // sum up all sub_total
-      // update invoice total_amount
     } catch (error) {
       throw new Error(error);
     }
