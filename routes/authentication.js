@@ -67,7 +67,8 @@ router.get('/check', auth, async (req, res, next) => {
       const revoked = await trx('Revoked Tokens').where({token});
       if (revoked.length > 0) {
         if (revoked[0].signed_out === 0) {
-          return 'Token is valid';
+          // return back the token
+          return token;
         } else {
           throw new Error('Token has been revoked');
         }

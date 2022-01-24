@@ -86,9 +86,9 @@ router.get('/pagination', async (req, res, next) => {
 });
 
 // get 1 user
-router.get('/:id', async (req, res, next) => {
-  const {id} = req.params;
-  const query = knex('User').where({id}).select('*');
+router.get('/:username', async (req, res, next) => {
+  const {username} = req.params;
+  const query = knex('User').where({username}).select('*');
   const result = await helper.knexQuery(query);
   res.status(result.status).send(result);
 });
