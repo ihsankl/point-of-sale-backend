@@ -16,6 +16,6 @@ app.use('*', (req, res) => {
 });
 
 // start server
-app.listen(process.env.PORT, () =>
-  console.log(`\x1b[0m[LOG] Server running on port ${process.env.PORT}`),
-);
+app.listen(process.env.PORT, () => {
+  console.log(`\x1b[0m[LOG] Server running on port ${process.env.PORT}`);
+});
