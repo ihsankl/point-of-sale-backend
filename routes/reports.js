@@ -521,7 +521,7 @@ router.get('/yearly', async (req, res, next) => {
 router.get('/daily', async (req, res, next) => {
   const query = knex.transaction(async (trx) => {
     try {
-      const today = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
+      const today = dayjs().format('YYYY-MM-DD');
       const invoicesToday = await trx
           .select('*')
           .from('Invoice')
