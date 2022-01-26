@@ -22,7 +22,6 @@
     "dayjs": "^1.10.7",
     "dotenv": "^9.0.2",
     "express": "^4.17.1",
-    "ioredis": "^4.28.3",
     "jsonwebtoken": "^8.5.1",
     "knex": "^0.95.15",
     "mysql2": "2.3.3"

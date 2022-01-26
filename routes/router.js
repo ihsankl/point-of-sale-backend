@@ -26,6 +26,7 @@ const routeFiles = [
   'customer',
   'invoice',
   'purchase_order',
+  'reports',
 ];
 routeFiles.forEach((route) => {
   const routeFile = require(`./${route}.js`);
