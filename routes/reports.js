@@ -208,52 +208,177 @@ router.get('/profit', async (req, res, next) => {
 
 // sum up last 7 days invoice total_amount
 // grouped by day
-router.get('/last7days', auth, async (req, res, next) => {
-  const query = knex('Invoice')
-      .whereBetween('date_recorded', [
-        // get last 7 day from now with dayjs
-        dayjs().subtract(7, 'day').format('YYYY-MM-DD HH:mm:ss'),
-        // today
-        dayjs().format('YYYY-MM-DD HH:mm:ss'),
-      ])
-      .sum('total_amount as total_amount')
-      .groupBy('date_recorded')
-      .orderBy('date_recorded', 'desc');
+router.get('/last7days', async (req, res, next) => {
+  const query = knex.transaction(async (trx) => {
+    try {
+      const _7days = Array.from(Array(7).keys()).map((i) => {
+        return dayjs()
+            .subtract(i, 'day')
+            .format('YYYY-MM-DD');
+      });
+      const promises = [];
+      _7days.map((date) => {
+        const query = trx
+            .sum('a.total_amount as total_amount')
+            .from('Invoice as a')
+            .where('a.date_recorded', date);
+        promises.push(query);
+      });
+      const _7daysLastYear = Array.from(Array(7).keys()).map((i) => {
+        return dayjs()
+            .subtract(i, 'day')
+            .subtract(1, 'year')
+            .format('YYYY-MM-DD');
+      });
+      const lastYearPromises = [];
+      _7daysLastYear.map((date) => {
+        const query = trx
+            .sum('a.total_amount as total_amount')
+            .from('Invoice as a')
+            .where('a.date_recorded', date);
+        lastYearPromises.push(query);
+      });
+      const lastYearRaw = await Promise.all(lastYearPromises);
+      // eslint-disable-next-line max-len
+      const lastYearFlatten = lastYearRaw.reduce((acc, cur) => acc.concat(cur), []);
+
+      _7days.map((date) => {
+        const query = trx
+            .sum('a.total_amount as total_amount')
+            .from('Invoice as a')
+            .where('a.date_recorded', date);
+        lastYearPromises.push(query);
+      });
+      const raw = await Promise.all(promises);
+      // flatten array
+      const rawFlatten = raw.reduce((acc, cur) => acc.concat(cur), []);
+      const result = rawFlatten.map((item, index) => {
+        // eslint-disable-next-line max-len
+        return {[_7days[index]]: item.total_amount ?? '0', last_year: lastYearFlatten[index]?.total_amount ?? '0'};
+      });
+      return result;
+    } catch (error) {
+      throw new Error(error);
+    }
+  });
+
   const result = await helper.knexQuery(query, 'last7days');
   res.status(result.status).send(result);
 });
 
-// sum up last 30 days invoice total_amount
-// grouped by day
-router.get('/last30days', auth, async (req, res, next) => {
-  const query = knex('Invoice')
-      .whereBetween('date_recorded', [
-        // get last 30 day from now with dayjs
-        dayjs().subtract(30, 'day').format('YYYY-MM-DD HH:mm:ss'),
-        // today
-        dayjs().format('YYYY-MM-DD HH:mm:ss'),
-      ])
-      .sum('total_amount as total_amount')
-      .groupBy('date_recorded')
-      .orderBy('date_recorded', 'desc');
-  const result = await helper.knexQuery(query, 'last30days');
+router.get('/last30days', async (req, res, next) => {
+  const query = knex.transaction(async (trx) => {
+    try {
+      const _30days = Array.from(Array(30).keys()).map((i) => {
+        return dayjs()
+            .subtract(i, 'day')
+            .format('YYYY-MM-DD');
+      });
+      const promises = [];
+      _30days.map((date) => {
+        const query = trx
+            .sum('a.total_amount as total_amount')
+            .from('Invoice as a')
+            .where('a.date_recorded', date);
+        promises.push(query);
+      });
+      const _30daysLastYear = Array.from(Array(30).keys()).map((i) => {
+        return dayjs()
+            .subtract(i, 'day')
+            .subtract(1, 'year')
+            .format('YYYY-MM-DD');
+      });
+      const lastYearPromises = [];
+      _30daysLastYear.map((date) => {
+        const query = trx
+            .sum('a.total_amount as total_amount')
+            .from('Invoice as a')
+            .where('a.date_recorded', date);
+        lastYearPromises.push(query);
+      });
+      const lastYearRaw = await Promise.all(lastYearPromises);
+      // eslint-disable-next-line max-len
+      const lastYearFlatten = lastYearRaw.reduce((acc, cur) => acc.concat(cur), []);
+
+      _30days.map((date) => {
+        const query = trx
+            .sum('a.total_amount as total_amount')
+            .from('Invoice as a')
+            .where('a.date_recorded', date);
+        lastYearPromises.push(query);
+      });
+      const raw = await Promise.all(promises);
+      // flatten array
+      const rawFlatten = raw.reduce((acc, cur) => acc.concat(cur), []);
+      const result = rawFlatten.map((item, index) => {
+        // eslint-disable-next-line max-len
+        return {[_30days[index]]: item.total_amount ?? '0', last_year: lastYearFlatten[index]?.total_amount ?? '0'};
+      });
+      return result;
+    } catch (error) {
+      throw new Error(error);
+    }
+  });
+
+  const result = await helper.knexQuery(query, 'last7days');
   res.status(result.status).send(result);
 });
 
-// sum up last 365 days invoice total_amount
-// grouped by day
-router.get('/last365days', auth, async (req, res, next) => {
-  const query = knex('Invoice')
-      .whereBetween('date_recorded', [
-        // get last 365 day from now with dayjs
-        dayjs().subtract(365, 'day').format('YYYY-MM-DD HH:mm:ss'),
-        // today
-        dayjs().format('YYYY-MM-DD HH:mm:ss'),
-      ])
-      .sum('total_amount as total_amount')
-      .groupBy('date_recorded')
-      .orderBy('date_recorded', 'desc');
-  const result = await helper.knexQuery(query, 'last365days');
+router.get('/last1year', async (req, res, next) => {
+  const query = knex.transaction(async (trx) => {
+    try {
+      const _wholeYear = Array.from(Array(365).keys()).map((i) => {
+        return dayjs()
+            .subtract(i, 'day')
+            .format('YYYY-MM-DD');
+      });
+      const promises = [];
+      _wholeYear.map((date) => {
+        const query = trx
+            .sum('a.total_amount as total_amount')
+            .from('Invoice as a')
+            .where('a.date_recorded', date);
+        promises.push(query);
+      });
+      const _wholeYearLastYear = Array.from(Array(365).keys()).map((i) => {
+        return dayjs()
+            .subtract(i, 'day')
+            .subtract(1, 'year')
+            .format('YYYY-MM-DD');
+      });
+      const lastYearPromises = [];
+      _wholeYearLastYear.map((date) => {
+        const query = trx
+            .sum('a.total_amount as total_amount')
+            .from('Invoice as a')
+            .where('a.date_recorded', date);
+        lastYearPromises.push(query);
+      });
+      const lastYearRaw = await Promise.all(lastYearPromises);
+      // eslint-disable-next-line max-len
+      const lastYearFlatten = lastYearRaw.reduce((acc, cur) => acc.concat(cur), []);
+
+      _wholeYear.map((date) => {
+        const query = trx
+            .sum('a.total_amount as total_amount')
+            .from('Invoice as a')
+            .where('a.date_recorded', date);
+        lastYearPromises.push(query);
+      });
+      const raw = await Promise.all(promises);
+      // flatten array
+      const rawFlatten = raw.reduce((acc, cur) => acc.concat(cur), []);
+      const result = rawFlatten.map((item, index) => {
+        // eslint-disable-next-line max-len
+        return {[_wholeYear[index]]: item.total_amount ?? '0', last_year: lastYearFlatten[index]?.total_amount ?? '0'};
+      });
+      return result;
+    } catch (error) {
+      throw new Error(error);
+    }
+  });
+
+  const result = await helper.knexQuery(query, 'last7days');
   res.status(result.status).send(result);
 });
 
@@ -340,7 +465,7 @@ router.get('/yearly', async (req, res, next) => {
         const yearKey = Object.keys(year)[0];
         const yearValue = Object.values(year)[0];
         const invoiceEachMonth = yearValue.map((invoice) => {
-          const month = dayjs(invoice.date_recorded).format('MMM');
+          const month = dayjs(invoice.date_recorded).format('MMMM');
           const totalAmount = invoice.total_amount;
           return {
             month,
@@ -390,5 +515,53 @@ router.get('/yearly', async (req, res, next) => {
   res.status(result.status).send(result);
 });
 
+// daily reports
+// find which product sold today
+// sum up total_amount of today's invoice
+router.get('/daily', async (req, res, next) => {
+  const query = knex.transaction(async (trx) => {
+    try {
+      const today = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
+      const invoicesToday = await trx
+          .select('*')
+          .from('Invoice')
+          .where('date_recorded', today);
+      const invoiceIds = invoicesToday.map((invoice) => invoice.id);
+      const salesToday = await trx
+          .select('*')
+          .from('Sales')
+          .whereIn('invoice_id', invoiceIds);
+      const productIds = salesToday.map((sale) => sale.product_id);
+      const productsToday = await trx
+          .select('*')
+          .from('Product')
+          .whereIn('id', productIds);
+      const productQty = productsToday.map((product) => {
+        const qty = salesToday
+            .find((sale) => sale.product_id === product.id)
+            .qty;
+        const subTotal = salesToday
+            .find((sale) => sale.product_id === product.id)
+            .sub_total;
+        return {
+          product_name: product.name,
+          qty,
+          sub_total: subTotal,
+        };
+      });
+      // sum up total_amount of today's invoice
+      const totalAmount = invoicesToday.reduce(
+          (acc, curr) => acc + curr.total_amount,
+          0,
+      );
+      const result = productQty.sort((a, b) => b.qty - a.qty);
+      return {result, total: totalAmount};
+    } catch (error) {
+      throw new Error(error);
+    }
+  });
+  const result = await helper.knexQuery(query);
+  res.status(result.status).send(result);
+});
 
 module.exports = router;
