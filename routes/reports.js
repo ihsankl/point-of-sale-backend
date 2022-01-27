@@ -8,7 +8,7 @@ const dayjs = require('dayjs');
 const router = express.Router();
 
 // count budget this month from `Purchase Order` table
-router.get('/budget', async (req, res, next) => {
+router.get('/budget', auth, async (req, res, next) => {
   const query = knex.transaction(async (trx) => {
     try {
       const total_budget = await trx('Purchase Order')
@@ -49,7 +49,7 @@ router.get('/budget', async (req, res, next) => {
 });
 
 // count total transaction happened this month from `Invoice` table
-router.get('/transaction', async (req, res, next) => {
+router.get('/transaction', auth, async (req, res, next) => {
   const query = knex.transaction(async (trx) => {
     try {
       const total_transaction = await trx('Invoice')
@@ -132,7 +132,7 @@ router.get('/gross', auth, async (req, res, next) => {
 
 // count profit this month calculated from `Invoice` table
 // and `Purchase Order` table joined
-router.get('/profit', async (req, res, next) => {
+router.get('/profit', auth, async (req, res, next) => {
   const query = knex.transaction(async (trx) => {
     try {
       const total_budget = await trx
@@ -208,7 +208,7 @@ router.get('/profit', async (req, res, next) => {
 
 // sum up last 7 days invoice total_amount
 // grouped by day
-router.get('/last7days', async (req, res, next) => {
+router.get('/last7days', auth, async (req, res, next) => {
   const query = knex.transaction(async (trx) => {
     try {
       const _7days = Array.from(Array(7).keys()).map((i) => {
@@ -266,7 +266,7 @@ router.get('/last7days', async (req, res, next) => {
   res.status(result.status).send(result);
 });
 
-router.get('/last30days', async (req, res, next) => {
+router.get('/last30days', auth, async (req, res, next) => {
   const query = knex.transaction(async (trx) => {
     try {
       const _30days = Array.from(Array(30).keys()).map((i) => {
@@ -324,7 +324,65 @@ router.get('/last30days', async (req, res, next) => {
   res.status(result.status).send(result);
 });
 
-router.get('/last1year', async (req, res, next) => {
+router.get('/last90days', auth, async (req, res, next) => {
+  const query = knex.transaction(async (trx) => {
+    try {
+      const _90days = Array.from(Array(90).keys()).map((i) => {
+        return dayjs()
+            .subtract(i, 'day')
+            .format('YYYY-MM-DD');
+      });
+      const promises = [];
+      _90days.map((date) => {
+        const query = trx
+            .sum('a.total_amount as total_amount')
+            .from('Invoice as a')
+            .where('a.date_recorded', date);
+        promises.push(query);
+      });
+      const _90daysLastYear = Array.from(Array(90).keys()).map((i) => {
+        return dayjs()
+            .subtract(i, 'day')
+            .subtract(1, 'year')
+            .format('YYYY-MM-DD');
+      });
+      const lastYearPromises = [];
+      _90daysLastYear.map((date) => {
+        const query = trx
+            .sum('a.total_amount as total_amount')
+            .from('Invoice as a')
+            .where('a.date_recorded', date);
+        lastYearPromises.push(query);
+      });
+      const lastYearRaw = await Promise.all(lastYearPromises);
+      // eslint-disable-next-line max-len
+      const lastYearFlatten = lastYearRaw.reduce((acc, cur) => acc.concat(cur), []);
+
+      _90days.map((date) => {
+        const query = trx
+            .sum('a.total_amount as total_amount')
+            .from('Invoice as a')
+            .where('a.date_recorded', date);
+        lastYearPromises.push(query);
+      });
+      const raw = await Promise.all(promises);
+      // flatten array
+      const rawFlatten = raw.reduce((acc, cur) => acc.concat(cur), []);
+      const result = rawFlatten.map((item, index) => {
+        // eslint-disable-next-line max-len
+        return {[_90days[index]]: item.total_amount ?? '0', last_year: lastYearFlatten[index]?.total_amount ?? '0'};
+      });
+      return result;
+    } catch (error) {
+      throw new Error(error);
+    }
+  });
+
+  const result = await helper.knexQuery(query, 'last7days');
+  res.status(result.status).send(result);
+});
+
+router.get('/last1year', auth, async (req, res, next) => {
   const query = knex.transaction(async (trx) => {
     try {
       const _wholeYear = Array.from(Array(365).keys()).map((i) => {
@@ -392,6 +450,7 @@ router.get('/last1year', async (req, res, next) => {
 router.get('/top5', auth, async (req, res, next) => {
   const query = knex.transaction(async (trx) => {
     try {
+      // invoice this month
       const invoicesThisMonth = await trx
           .select('id')
           .from('Invoice')
@@ -402,6 +461,7 @@ router.get('/top5', auth, async (req, res, next) => {
             dayjs().endOf('month').format('YYYY-MM-DD HH:mm:ss'),
           ]);
       const invoiceIds = invoicesThisMonth.map((invoice) => invoice.id);
+      // sales which has invoice_id in `Sales` table
       const salesThisMonth = await trx
           .select('*')
           .from('Sales')
@@ -411,16 +471,18 @@ router.get('/top5', auth, async (req, res, next) => {
           .select('*')
           .from('Product')
           .whereIn('id', productIds);
-      const productQty = productsThisMonth.map((product) => {
-        const qty = salesThisMonth
-            .find((sale) => sale.product_id === product.id)
-            .qty;
+      // sum up all qty with same product_id in result of step 3
+      const qtysThisMonth = productsThisMonth.map((product) => {
+        // eslint-disable-next-line max-len
+        const qty = salesThisMonth.filter((sale) => sale.product_id === product.id).reduce((acc, cur) => acc + cur.qty, 0);
         return {
+          product_id: product.id,
           product_name: product.name,
           qty,
         };
       });
-      const top5 = productQty.sort((a, b) => b.qty - a.qty).slice(0, 5);
+      // get top 5 product with max qty from result of step 4
+      const top5 = qtysThisMonth.sort((a, b) => b.qty - a.qty).slice(0, 5);
       return top5;
     } catch (error) {
       throw new Error(error);
@@ -437,7 +499,7 @@ router.get('/top5', auth, async (req, res, next) => {
 // 3. get invoice for each month in each year
 // 4. sum up all invoice for each month in each year
 // 5. get yearly gross for each year
-router.get('/yearly', async (req, res, next) => {
+router.get('/yearly', auth, async (req, res, next) => {
   const query = knex.transaction(async (trx) => {
     try {
       const years = Array.from(Array(6).keys()).map((i) => {
@@ -518,7 +580,7 @@ router.get('/yearly', async (req, res, next) => {
 // daily reports
 // find which product sold today
 // sum up total_amount of today's invoice
-router.get('/daily', async (req, res, next) => {
+router.get('/daily', auth, async (req, res, next) => {
   const query = knex.transaction(async (trx) => {
     try {
       const today = dayjs().format('YYYY-MM-DD');
