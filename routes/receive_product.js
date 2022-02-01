@@ -33,7 +33,7 @@ router.post('/', auth, async (req, res, next) => {
       }).into('Receive Product');
       await trx('Product')
           .where({id: productId[0].id})
-          .update({qty: knex.raw('qty + ?', [qty])});
+          .update({unit_in_stock: knex.raw('unit_in_stock + ?', [qty])});
       return x;
     } catch (error) {
       throw new Error(error);
