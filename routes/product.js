@@ -55,7 +55,8 @@ router.get('/pagination', auth, async (req, res, next) => {
       .where('a.name', 'like', `%${name}%`)
       .orWhere('a.category_id', category_id)
       .limit(limit)
-      .offset(page);
+      .offset(page)
+      .orderBy('a.name', 'asc');
   const result = await helper.knexQuery(query, `getProduct:${page}`);
 
   // generate metadata
@@ -84,7 +85,8 @@ router.get('/', auth, async (req, res, next) => {
       .from('Product as a')
       .leftJoin('Product Unit as b', 'a.unit_id', 'b.id')
       .leftJoin('Product Category as c', 'a.category_id', 'c.id')
-      .leftJoin('User as d', 'a.user_id', 'd.id');
+      .leftJoin('User as d', 'a.user_id', 'd.id')
+      .orderBy('a.name', 'asc');
   const result = await helper.knexQuery(query, 'allProducts');
   res.status(result.status).send(result);
 });
