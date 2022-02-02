@@ -11,16 +11,16 @@ const router = express.Router();
 router.get('/budget', auth, async (req, res, next) => {
   const query = knex.transaction(async (trx) => {
     try {
-      const total_budget = await trx('Purchase Order')
-          .whereBetween('order_date', [
+      const total_budget = await trx('Receive Product')
+          .whereBetween('received_date', [
             // get first day of this month with dayjs
             dayjs().startOf('month').format('YYYY-MM-DD HH:mm:ss'),
             // get last day of this month with dayjs
             dayjs().endOf('month').format('YYYY-MM-DD HH:mm:ss'),
           ])
           .sum('sub_total as total_budget');
-      const lastMonth = await trx('Purchase Order')
-          .whereBetween('order_date', [
+      const lastMonth = await trx('Receive Product')
+          .whereBetween('received_date', [
             // get first day of last month with dayjs
             dayjs()
                 .subtract(1, 'month')
@@ -137,8 +137,8 @@ router.get('/profit', auth, async (req, res, next) => {
     try {
       const total_budget = await trx
           .sum('a.sub_total as total_budget')
-          .from('Purchase Order as a')
-          .whereBetween('a.order_date', [
+          .from('Receive Product as a')
+          .whereBetween('a.received_date', [
             // get first day of this month with dayjs
             dayjs().startOf('month').format('YYYY-MM-DD HH:mm:ss'),
             // get last day of this month with dayjs
@@ -156,8 +156,8 @@ router.get('/profit', auth, async (req, res, next) => {
       // total budget and total gross last month
       const lastMonthTotalBudget = await trx
           .sum('a.sub_total as total_budget')
-          .from('Purchase Order as a')
-          .whereBetween('a.order_date', [
+          .from('Receive Product as a')
+          .whereBetween('a.received_date', [
             // get first day of last month with dayjs
             dayjs()
                 .subtract(1, 'month')
