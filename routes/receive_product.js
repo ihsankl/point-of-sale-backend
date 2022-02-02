@@ -48,8 +48,8 @@ router.get('/pagination', auth, async (req, res, next) => {
   const {page, limit, date_from, date_to} = req.query;
   const query = knex
       .select(
-          'a.*',
           'b.name as product_name',
+          'a.*',
           'c.name as supplier_name',
       )
       .from('Receive Product as a')
