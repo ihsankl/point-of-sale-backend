@@ -14,27 +14,41 @@ router.get('/budget', auth, async (req, res, next) => {
       const total_budget = await trx('Receive Product')
           .whereBetween('received_date', [
             // get first day of this month with dayjs
-            dayjs().startOf('month').format('YYYY-MM-DD HH:mm:ss'),
+            dayjs().startOf('month').format('YYYY-MM-DD'),
             // get last day of this month with dayjs
-            dayjs().endOf('month').format('YYYY-MM-DD HH:mm:ss'),
+            dayjs().endOf('month').format('YYYY-MM-DD'),
           ])
           .sum('sub_total as total_budget');
+      const total_expense = await trx('Receive Product')
+          .whereBetween('received_date', [
+            dayjs().startOf('month').format('YYYY-MM-DD'),
+            dayjs().endOf('month').format('YYYY-MM-DD'),
+          ])
+          .sum('additional_expenses as total_expense');
       const lastMonth = await trx('Receive Product')
           .whereBetween('received_date', [
             // get first day of last month with dayjs
             dayjs()
                 .subtract(1, 'month')
                 .startOf('month')
-                .format('YYYY-MM-DD HH:mm:ss'),
+                .format('YYYY-MM-DD'),
             // get last day of last month with dayjs
             dayjs()
                 .subtract(1, 'month')
                 .endOf('month')
-                .format('YYYY-MM-DD HH:mm:ss'),
+                .format('YYYY-MM-DD'),
           ])
           .sum('sub_total as total_budget');
-      const totalBudget = total_budget?.[0]?.total_budget ?? 0;
-      const totalLastMonth = lastMonth?.[0]?.total_budget ?? 0;
+      const last_month_expense = await trx('Receive Product')
+          .whereBetween('received_date', [
+            dayjs().subtract(1, 'month').startOf('month').format('YYYY-MM-DD'),
+            dayjs().subtract(1, 'month').endOf('month').format('YYYY-MM-DD'),
+          ])
+          .sum('additional_expenses as total_expense');
+      const totalBudget = parseInt(total_budget?.[0]?.total_budget) +
+      parseInt(total_expense?.[0]?.total_expense) ?? 0;
+      const totalLastMonth = parseInt(lastMonth?.[0]?.total_budget) +
+      parseInt(last_month_expense?.[0]?.total_expense) ?? 0;
       // eslint-disable-next-line max-len
       let diffFromLastMonth = (((totalBudget - totalLastMonth) / totalLastMonth) * 100).toFixed(2);
       // if percent is infinity, set it to 100
@@ -55,9 +69,9 @@ router.get('/transaction', auth, async (req, res, next) => {
       const total_transaction = await trx('Invoice')
           .whereBetween('date_recorded', [
             // get first day of this month with dayjs
-            dayjs().startOf('month').format('YYYY-MM-DD HH:mm:ss'),
+            dayjs().startOf('month').format('YYYY-MM-DD'),
             // get last day of this month with dayjs
-            dayjs().endOf('month').format('YYYY-MM-DD HH:mm:ss'),
+            dayjs().endOf('month').format('YYYY-MM-DD'),
           ])
           .count('id as total_transaction');
       const lastMonth = await trx('Invoice')
@@ -66,12 +80,12 @@ router.get('/transaction', auth, async (req, res, next) => {
             dayjs()
                 .subtract(1, 'month')
                 .startOf('month')
-                .format('YYYY-MM-DD HH:mm:ss'),
+                .format('YYYY-MM-DD'),
             // get last day of last month with dayjs
             dayjs()
                 .subtract(1, 'month')
                 .endOf('month')
-                .format('YYYY-MM-DD HH:mm:ss'),
+                .format('YYYY-MM-DD'),
           ])
           .count('id as total_transaction');
       const totalTransaction = total_transaction?.[0]?.total_transaction ?? 0;
@@ -96,9 +110,9 @@ router.get('/gross', auth, async (req, res, next) => {
       const total_gross = await trx('Invoice')
           .whereBetween('date_recorded', [
             // get first day of this month with dayjs
-            dayjs().startOf('month').format('YYYY-MM-DD HH:mm:ss'),
+            dayjs().startOf('month').format('YYYY-MM-DD'),
             // get last day of this month with dayjs
-            dayjs().endOf('month').format('YYYY-MM-DD HH:mm:ss'),
+            dayjs().endOf('month').format('YYYY-MM-DD'),
           ])
           .sum('total_amount as total_gross');
       const lastMonth = await trx('Invoice')
@@ -107,12 +121,12 @@ router.get('/gross', auth, async (req, res, next) => {
             dayjs()
                 .subtract(1, 'month')
                 .startOf('month')
-                .format('YYYY-MM-DD HH:mm:ss'),
+                .format('YYYY-MM-DD'),
             // get last day of last month with dayjs
             dayjs()
                 .subtract(1, 'month')
                 .endOf('month')
-                .format('YYYY-MM-DD HH:mm:ss'),
+                .format('YYYY-MM-DD'),
           ])
           .sum('total_amount as total_gross');
       const totalGross = total_gross?.[0]?.total_gross ?? 0;
@@ -140,18 +154,18 @@ router.get('/profit', auth, async (req, res, next) => {
           .from('Receive Product as a')
           .whereBetween('a.received_date', [
             // get first day of this month with dayjs
-            dayjs().startOf('month').format('YYYY-MM-DD HH:mm:ss'),
+            dayjs().startOf('month').format('YYYY-MM-DD'),
             // get last day of this month with dayjs
-            dayjs().endOf('month').format('YYYY-MM-DD HH:mm:ss'),
+            dayjs().endOf('month').format('YYYY-MM-DD'),
           ]);
       const total_gross = await trx
           .sum('a.total_amount as total_total_gross')
           .from('Invoice as a')
           .whereBetween('a.date_recorded', [
             // get first day of this month with dayjs
-            dayjs().startOf('month').format('YYYY-MM-DD HH:mm:ss'),
+            dayjs().startOf('month').format('YYYY-MM-DD'),
             // get last day of this month with dayjs
-            dayjs().endOf('month').format('YYYY-MM-DD HH:mm:ss'),
+            dayjs().endOf('month').format('YYYY-MM-DD'),
           ]);
       // total budget and total gross last month
       const lastMonthTotalBudget = await trx
@@ -162,12 +176,12 @@ router.get('/profit', auth, async (req, res, next) => {
             dayjs()
                 .subtract(1, 'month')
                 .startOf('month')
-                .format('YYYY-MM-DD HH:mm:ss'),
+                .format('YYYY-MM-DD'),
             // get last day of last month with dayjs
             dayjs()
                 .subtract(1, 'month')
                 .endOf('month')
-                .format('YYYY-MM-DD HH:mm:ss'),
+                .format('YYYY-MM-DD'),
           ]);
       const lastMonthTotalGross = await trx
           .sum('a.total_amount as total_total_gross')
@@ -177,12 +191,12 @@ router.get('/profit', auth, async (req, res, next) => {
             dayjs()
                 .subtract(1, 'month')
                 .startOf('month')
-                .format('YYYY-MM-DD HH:mm:ss'),
+                .format('YYYY-MM-DD'),
             // get last day of last month with dayjs
             dayjs()
                 .subtract(1, 'month')
                 .endOf('month')
-                .format('YYYY-MM-DD HH:mm:ss'),
+                .format('YYYY-MM-DD'),
           ]);
       const totalBudgetLastMonth = lastMonthTotalBudget?.[0]?.total_budget ?? 0;
       // eslint-disable-next-line max-len
@@ -456,9 +470,9 @@ router.get('/top5', auth, async (req, res, next) => {
           .from('Invoice')
           .whereBetween('date_recorded', [
             // get first day of this month with dayjs
-            dayjs().startOf('month').format('YYYY-MM-DD HH:mm:ss'),
+            dayjs().startOf('month').format('YYYY-MM-DD'),
             // get last day of this month with dayjs
-            dayjs().endOf('month').format('YYYY-MM-DD HH:mm:ss'),
+            dayjs().endOf('month').format('YYYY-MM-DD'),
           ]);
       const invoiceIds = invoicesThisMonth.map((invoice) => invoice.id);
       // sales which has invoice_id in `Sales` table
@@ -512,8 +526,8 @@ router.get('/yearly', auth, async (req, res, next) => {
             .from('Invoice')
             .whereBetween('date_recorded', [
               // whole year of year variable with dayjs
-              dayjs(`${year}-01-01 00:00:00`).format('YYYY-MM-DD HH:mm:ss'),
-              dayjs(`${year}-12-31 23:59:59`).format('YYYY-MM-DD HH:mm:ss'),
+              dayjs(`${year}-01-01 00:00:00`).format('YYYY-MM-DD'),
+              dayjs(`${year}-12-31 23:59:59`).format('YYYY-MM-DD'),
             ]);
         invoiceEachYearPromises.push(query);
       });
