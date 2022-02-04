@@ -19,6 +19,7 @@ router.post('/', auth, async (req, res, next) => {
     unit_id,
     category_id,
     user_id,
+    distributor_price,
   } = req.body;
   const query = knex('Product')
       .insert({
@@ -32,6 +33,7 @@ router.post('/', auth, async (req, res, next) => {
         unit_id,
         category_id,
         user_id,
+        distributor_price,
       });
   const result = await helper.knexQuery(query);
   res.status(result.status).send(result);
