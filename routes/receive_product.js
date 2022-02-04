@@ -16,6 +16,7 @@ router.post('/', auth, async (req, res, next) => {
     product_id,
     user_id,
     supplier_id,
+    expired_date,
   } = req.body;
   const query = knex.transaction(async (trx) => {
     try {
@@ -30,6 +31,7 @@ router.post('/', auth, async (req, res, next) => {
         product_id: productId[0].id,
         user_id,
         supplier_id,
+        expired_date,
       }).into('Receive Product');
       await trx('Product')
           .where({id: productId[0].id})
@@ -114,6 +116,7 @@ router.put('/:id', auth, async (req, res, next) => {
     product_id,
     user_id,
     supplier_id,
+    expired_date,
   } = req.body;
   const query = knex('Receive Product')
       .where({id})
@@ -125,6 +128,7 @@ router.put('/:id', auth, async (req, res, next) => {
         product_id,
         user_id,
         supplier_id,
+        expired_date,
       });
   const result = await helper.knexQuery(query);
   res.status(result.status).send(result);
