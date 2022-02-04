@@ -22,27 +22,25 @@ router.post('/', auth, async (req, res, next) => {
   } = req.body;
   const query = knex.transaction(async (trx) => {
     try {
-      // check if code or name already exist
-      const productId = await trx('Product')
-          .where({code, name})
+      // check if product code already exist
+      const productCode = await trx('Product')
+          .where({code})
           .select('id');
-      if (productId.length === 0) {
-        return await trx('Product')
-            .insert({
-              code,
-              name,
-              unit_in_stock,
-              disc_percentage,
-              unit_price,
-              re_order_level,
-              unit_id,
-              category_id,
-              user_id,
-              distributor_price,
-            });
-      } else {
-        throw new Error('Product already exist');
+      if (productCode.length > 0) {
+        throw new Error('Product code already exist');
       }
+      return await trx.insert({
+        code,
+        name,
+        unit_in_stock,
+        disc_percentage,
+        unit_price,
+        re_order_level,
+        unit_id,
+        category_id,
+        user_id,
+        distributor_price,
+      }).into('Product');
     } catch (error) {
       throw new Error(error);
     }
