@@ -72,11 +72,11 @@ router.get('/pagination', auth, async (req, res, next) => {
   const offset = (page - 1) * limit;
   const query = knex
       .select(
+          'c.name',
           'a.*',
           'b.total_amount',
           'b.amount_tendered',
           'b.date_recorded',
-          'c.name',
       )
       .from('Sales')
       .leftJoin('Invoice as b', 'b.id', 'a.invoice_id')
@@ -101,9 +101,9 @@ router.get('/pagination', auth, async (req, res, next) => {
 router.get('/', auth, async (req, res, next) => {
   const query = knex
       .select(
+          'c.name',
           'a.*',
           'b.date_recorded',
-          'c.name',
       )
       .from('Sales as a')
       .leftJoin('Invoice as b', 'b.id', 'a.invoice_id')
@@ -117,11 +117,11 @@ router.get('/:id', auth, async (req, res, next) => {
   const {id} = req.params;
   const query = knex
       .select(
+          'c.name',
           'a.*',
           'b.total_amount',
           'b.amount_tendered',
           'b.date_recorded',
-          'c.name',
       )
       .from('Sales as a')
       .leftJoin('Invoice as b', 'b.id', 'a.invoice_id')
