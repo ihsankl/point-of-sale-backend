@@ -13,6 +13,7 @@ router.post('/', auth, async (req, res, next) => {
     amount_tendered,
     date_recorded,
     user_id,
+    note,
     customer_id} =
      req.body;
   const query = knex('Invoice')
@@ -21,6 +22,7 @@ router.post('/', auth, async (req, res, next) => {
         amount_tendered,
         date_recorded,
         user_id,
+        note,
         customer_id,
       });
   const result = await helper.knexQuery(query);
