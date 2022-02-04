@@ -97,6 +97,7 @@ router.put('/:id', auth, async (req, res, next) => {
     date_recorded,
     user_id,
     customer_id,
+    note,
   } = req.body;
   const query = knex('Invoice')
       .where({id})
@@ -106,6 +107,7 @@ router.put('/:id', auth, async (req, res, next) => {
         date_recorded,
         user_id,
         customer_id,
+        note,
       });
   const result = await helper.knexQuery(query);
   res.status(result.status).send(result);

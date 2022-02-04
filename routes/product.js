@@ -127,6 +127,7 @@ router.put('/:id', auth, async (req, res, next) => {
     unit_id,
     category_id,
     user_id,
+    distributor_price,
   } = req.body;
   const query = knex('Product')
       .where({id})
@@ -141,6 +142,7 @@ router.put('/:id', auth, async (req, res, next) => {
         unit_id,
         category_id,
         user_id,
+        distributor_price,
       });
   const result = await helper.knexQuery(query);
   res.status(result.status).send(result);
