@@ -9,7 +9,6 @@ const router = express.Router();
 // create product
 router.post('/', auth, async (req, res, next) => {
   const {
-    expired_date,
     code,
     name,
     unit_in_stock,
@@ -23,7 +22,6 @@ router.post('/', auth, async (req, res, next) => {
   } = req.body;
   const query = knex('Product')
       .insert({
-        expired_date,
         code,
         name,
         unit_in_stock,
@@ -117,7 +115,6 @@ router.get('/:id', auth, async (req, res, next) => {
 router.put('/:id', auth, async (req, res, next) => {
   const {id} = req.params;
   const {
-    expired_date,
     code,
     name,
     unit_in_stock,
@@ -132,7 +129,6 @@ router.put('/:id', auth, async (req, res, next) => {
   const query = knex('Product')
       .where({id})
       .update({
-        expired_date,
         code,
         name,
         unit_in_stock,
