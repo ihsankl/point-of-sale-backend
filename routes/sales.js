@@ -20,7 +20,7 @@ router.post('/', auth, async (req, res, next) => {
   const query = knex.transaction(async (trx) => {
     try {
       const total_amount = products
-          .reduce((acc, cur) => acc + cur.sub_total, 0);
+          .reduce((acc, cur) => parseInt(acc) + parseInt(cur.sub_total), 0);
       let invoiceId = null;
       if (invoice_id) {
         // add total_amount
@@ -143,7 +143,7 @@ router.put('/:id', async (req, res, next) => {
               'qty',
           )
           .where({id});
-      if (sub_total > sales_before[0].sub_total) {
+      if (sub_total < sales_before[0].sub_total) {
         await trx
             .update({
               total_amount: knex.raw(
@@ -153,7 +153,7 @@ router.put('/:id', async (req, res, next) => {
             })
             .from('Invoice')
             .where({id: invoice_id});
-      } else if (sub_total < sales_before[0].sub_total) {
+      } else if (sub_total > sales_before[0].sub_total) {
         await trx
             .update({
               total_amount: knex.raw(

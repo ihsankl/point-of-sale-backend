@@ -474,7 +474,7 @@ router.get('/top5', auth, async (req, res, next) => {
       // sum up all qty with same product_id in result of step 3
       const qtysThisMonth = productsThisMonth.map((product) => {
         // eslint-disable-next-line max-len
-        const qty = salesThisMonth.filter((sale) => sale.product_id === product.id).reduce((acc, cur) => acc + cur.qty, 0);
+        const qty = salesThisMonth.filter((sale) => sale.product_id === product.id).reduce((acc, cur) => parseInt(acc) + parseInt(cur.qty), 0);
         return {
           product_id: product.id,
           product_name: product.name,
@@ -537,9 +537,9 @@ router.get('/yearly', auth, async (req, res, next) => {
         const summaryInvoiceEachMonth = invoiceEachMonth.reduce(
             (acc, curr) => {
               if (acc[curr.month]) {
-                acc[curr.month] += curr.total_amount;
+                acc[curr.month] += parseInt(curr.total_amount);
               } else {
-                acc[curr.month] = curr.total_amount;
+                acc[curr.month] = parseInt(curr.total_amount);
               }
               return acc;
             },
@@ -553,7 +553,7 @@ router.get('/yearly', auth, async (req, res, next) => {
         const yearKey = Object.keys(year)[0];
         const yearValue = Object.values(year)[0];
         const yearlyGross = Object.values(yearValue).reduce(
-            (acc, curr) => acc + curr,
+            (acc, curr) => parseInt(acc) + parseInt(curr),
             0,
         );
         return {
@@ -580,10 +580,12 @@ router.get('/yearly', auth, async (req, res, next) => {
 // daily reports
 // find which product sold today
 // sum up total_amount of today's invoice
-router.get('/daily', auth, async (req, res, next) => {
+router.get('/daily', async (req, res, next) => {
+  const {date} = req.query;
   const query = knex.transaction(async (trx) => {
     try {
-      const today = dayjs().format('YYYY-MM-DD');
+      // eslint-disable-next-line max-len
+      const today = !!date ? dayjs(date).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD');
       const invoicesToday = await trx
           .select('*')
           .from('Invoice')
@@ -594,30 +596,29 @@ router.get('/daily', auth, async (req, res, next) => {
           .from('Sales')
           .whereIn('invoice_id', invoiceIds);
       const productIds = salesToday.map((sale) => sale.product_id);
+      // remove duplicates in productIds
+      const uniqueProductIds = [...new Set(productIds)];
       const productsToday = await trx
           .select('*')
           .from('Product')
-          .whereIn('id', productIds);
-      const productQty = productsToday.map((product) => {
-        const qty = salesToday
-            .find((sale) => sale.product_id === product.id)
-            .qty;
-        const subTotal = salesToday
-            .find((sale) => sale.product_id === product.id)
-            .sub_total;
+          .whereIn('id', uniqueProductIds);
+      const salesProductToday = productsToday.map((product) => {
+        // eslint-disable-next-line max-len
+        const qty = salesToday.filter((sale) => sale.product_id === product.id).reduce((acc, cur) => parseInt(acc) + parseInt(cur.qty), 0);
         return {
+          product_id: product.id,
           product_name: product.name,
           qty,
-          sub_total: subTotal,
+          // eslint-disable-next-line max-len
+          sub_total: salesToday.filter((sale) => sale.product_id === product.id).reduce((acc, cur) => parseInt(acc) + parseInt(cur.sub_total), 0),
         };
       });
       // sum up total_amount of today's invoice
       const totalAmount = invoicesToday.reduce(
-          (acc, curr) => acc + curr.total_amount,
+          (acc, curr) => parseInt(acc) + parseInt(curr.total_amount),
           0,
       );
-      const result = productQty.sort((a, b) => b.qty - a.qty);
-      return {result, total: totalAmount};
+      return {result: salesProductToday, total: totalAmount};
     } catch (error) {
       throw new Error(error);
     }
