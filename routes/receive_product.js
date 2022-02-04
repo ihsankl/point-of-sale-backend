@@ -83,7 +83,8 @@ router.get('/', auth, async (req, res, next) => {
       )
       .from('Receive Product as a')
       .leftJoin('Product as b', 'a.product_id', 'b.id')
-      .leftJoin('Supplier as c', 'a.supplier_id', 'c.id');
+      .leftJoin('Supplier as c', 'a.supplier_id', 'c.id')
+      .orderBy('received_date', 'desc');
   const result = await helper.knexQuery(query, 'getAllReceiveProducts');
   res.status(result.status).send(result);
 });
