@@ -21,28 +21,41 @@ router.post('/', auth, async (req, res, next) => {
     try {
       const total_amount = products
           .reduce((acc, cur) => acc + cur.sub_total, 0);
-      const invoiceId = await trx('Invoice')
-          .insert({
-            total_amount,
-            amount_tendered,
-            date_recorded,
-            user_id,
-            customer_id,
-          });
+      let invoiceId = null;
+      if (invoice_id) {
+        // add total_amount
+        await trx('Invoice')
+            .update({
+              total_amount: knex.raw('total_amount + ?', total_amount),
+            })
+            .where({id: invoice_id});
+      } else {
+        invoiceId = await trx('Invoice')
+            .insert({
+              total_amount,
+              amount_tendered,
+              date_recorded,
+              user_id,
+              customer_id,
+            });
+      }
       const promises = [];
       products.map( (v, i) => {
-        const x = trx('Product')
-            .update({unit_in_stock: knex.raw('unit_in_stock - ?', v.qty)})
-            .where({id: v.product_id});
-        const y = trx('Sales')
-            .insert({
-              qty: v.qty,
-              unit_price: v.unit_price,
-              sub_total: v.sub_total,
-              invoice_id: invoice_id ?? invoiceId[0],
-              product_id: v.product_id,
-            });
-        promises.push(x, y);
+        promises.push(
+            trx('Product')
+                .update({unit_in_stock: knex.raw('unit_in_stock - ?', v.qty)})
+                .where({id: v.product_id}),
+        );
+        promises.push(
+            trx('Sales')
+                .insert({
+                  qty: v.qty,
+                  unit_price: v.unit_price,
+                  sub_total: v.sub_total,
+                  invoice_id: invoice_id ?? invoiceId[0],
+                  product_id: v.product_id,
+                }),
+        );
       });
       return await Promise.all(promises);
     } catch (error) {
@@ -89,8 +102,6 @@ router.get('/', auth, async (req, res, next) => {
   const query = knex
       .select(
           'a.*',
-          'b.total_amount',
-          'b.amount_tendered',
           'b.date_recorded',
           'c.name',
       )
@@ -121,11 +132,67 @@ router.get('/:id', auth, async (req, res, next) => {
 });
 
 // update sales
-router.put('/:id', auth, async (req, res, next) => {
+router.put('/:id', async (req, res, next) => {
   const {id} = req.params;
   const {qty, unit_price, sub_total, invoice_id, product_id} = req.body;
-  const query = knex('Sales')
-      .where({id}).update({qty, unit_price, sub_total, invoice_id, product_id});
+  const query = knex.transaction(async (trx) => {
+    try {
+      const sales_before = await trx('Sales')
+          .select(
+              'sub_total',
+              'qty',
+          )
+          .where({id});
+      if (sub_total > sales_before[0].sub_total) {
+        await trx
+            .update({
+              total_amount: knex.raw(
+                  '`total_amount` + ?',
+                  sub_total - sales_before[0].sub_total,
+              ),
+            })
+            .from('Invoice')
+            .where({id: invoice_id});
+      } else if (sub_total < sales_before[0].sub_total) {
+        await trx
+            .update({
+              total_amount: knex.raw(
+                  '`total_amount` - ?',
+                  sub_total - sales_before[0].sub_total,
+              ),
+            })
+            .from('Invoice')
+            .where({id: invoice_id});
+      }
+      if (qty > sales_before[0].qty) {
+        await trx
+            .update({
+              unit_in_stock: knex.raw(
+                  '`unit_in_stock` - ?',
+                  qty - sales_before[0].qty,
+              ),
+            })
+            .from('Product')
+            .where({id: product_id});
+      } else if (qty < sales_before[0].qty) {
+        await trx
+            .update({
+              unit_in_stock: knex.raw(
+                  '`unit_in_stock` + ?',
+                  sales_before[0].qty - qty,
+              ),
+            })
+            .from('Product')
+            .where({id: product_id});
+      }
+
+      return await trx('Sales')
+          .where({id})
+          .update({qty, unit_price, sub_total, invoice_id, product_id});
+    } catch (error) {
+      throw new Error(error);
+    }
+  });
   const result = await helper.knexQuery(query);
   res.status(result.status).send(result);
 });
