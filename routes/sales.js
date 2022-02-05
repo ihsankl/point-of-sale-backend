@@ -143,7 +143,7 @@ router.put('/:id', async (req, res, next) => {
               'qty',
           )
           .where({id});
-      if (sub_total < sales_before[0].sub_total) {
+      if (sub_total > sales_before[0].sub_total) {
         await trx
             .update({
               total_amount: knex.raw(
@@ -164,7 +164,7 @@ router.put('/:id', async (req, res, next) => {
             .from('Invoice')
             .where({id: invoice_id});
       }
-      if (qty > sales_before[0].qty) {
+      if (qty < sales_before[0].qty) {
         await trx
             .update({
               unit_in_stock: knex.raw(
