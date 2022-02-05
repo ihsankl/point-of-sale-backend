@@ -13,11 +13,12 @@ router.post('/', auth, async (req, res, next) => {
     unit_price,
     sub_total,
     received_date,
+    expired_date,
+    additional_expenses,
     product_id,
     user_id,
     supplier_id,
-    expired_date,
-    additional_expenses,
+    unit_id,
   } = req.body;
   const query = knex.transaction(async (trx) => {
     try {
@@ -29,11 +30,12 @@ router.post('/', auth, async (req, res, next) => {
         unit_price,
         sub_total,
         received_date,
+        expired_date,
+        additional_expenses,
         product_id: productId[0].id,
         user_id,
         supplier_id,
-        expired_date,
-        additional_expenses,
+        unit_id,
       }).into('Receive Product');
       await trx('Product')
           .where({id: productId[0].id})
@@ -82,10 +84,12 @@ router.get('/', auth, async (req, res, next) => {
           'b.name as product_name',
           'a.*',
           'c.name as supplier_name',
+          'd.name as unit_name',
       )
       .from('Receive Product as a')
       .leftJoin('Product as b', 'a.product_id', 'b.id')
       .leftJoin('Supplier as c', 'a.supplier_id', 'c.id')
+      .leftJoin('Product Unit as d', 'a.unit_id', 'd.id')
       .orderBy('received_date', 'desc');
   const result = await helper.knexQuery(query, 'getAllReceiveProducts');
   res.status(result.status).send(result);
@@ -96,13 +100,15 @@ router.get('/:id', auth, async (req, res, next) => {
   const {id} = req.params;
   const query = knex
       .select(
-          'a.*',
           'b.name as product_name',
+          'a.*',
           'c.name as supplier_name',
+          'd.name as unit_name',
       )
       .from('Receive Product')
       .leftJoin('Product as b', 'a.product_id', 'b.id')
       .leftJoin('Supplier as c', 'a.supplier_id', 'c.id')
+      .leftJoin('Product Unit as d', 'a.unit_id', 'd.id')
       .where({id});
   const result = await helper.knexQuery(query);
   res.status(result.status).send(result);
@@ -116,11 +122,12 @@ router.put('/:id', auth, async (req, res, next) => {
     unit_price,
     sub_total,
     received_date,
+    expired_date,
+    additional_expenses,
     product_id,
     user_id,
     supplier_id,
-    expired_date,
-    additional_expenses,
+    unit_id,
   } = req.body;
   const query = knex('Receive Product')
       .where({id})
@@ -129,11 +136,12 @@ router.put('/:id', auth, async (req, res, next) => {
         unit_price,
         sub_total,
         received_date,
+        expired_date,
+        additional_expenses,
         product_id,
         user_id,
         supplier_id,
-        expired_date,
-        additional_expenses,
+        unit_id,
       });
   const result = await helper.knexQuery(query);
   res.status(result.status).send(result);
