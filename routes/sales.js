@@ -200,7 +200,38 @@ router.put('/:id', async (req, res, next) => {
 // delete sales
 router.delete('/:id', auth, async (req, res, next) => {
   const {id} = req.params;
-  const query = knex('Sales').where({id}).del();
+  const query = knex.transaction(async (trx) => {
+    try {
+      // revert stock from product table
+      const sales_before = await trx('Sales')
+          .select('*')
+          .where({id});
+      await trx
+          .update({
+            unit_in_stock: knex.raw(
+                '`unit_in_stock` + ?',
+                sales_before[0].qty,
+            ),
+          })
+          .from('Product')
+          .where({id: sales_before[0].product_id});
+      // revert total amount from invoice table
+      await trx
+          .update({
+            total_amount: knex.raw(
+                '`total_amount` - ?',
+                sales_before[0].sub_total,
+            ),
+          })
+          .from('Invoice')
+          .where({id: sales_before[0].invoice_id});
+      return await trx('Sales')
+          .where({id})
+          .del();
+    } catch (error) {
+      throw new Error(error);
+    }
+  });
   const result = await helper.knexQuery(query);
   res.status(result.status).send(result);
 });
