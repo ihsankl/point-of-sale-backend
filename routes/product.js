@@ -19,6 +19,7 @@ router.post('/', auth, async (req, res, next) => {
     category_id,
     user_id,
     distributor_price,
+    capital_price,
   } = req.body;
   const query = knex.transaction(async (trx) => {
     try {
@@ -40,6 +41,7 @@ router.post('/', auth, async (req, res, next) => {
         category_id,
         user_id,
         distributor_price,
+        capital_price,
       }).into('Product');
     } catch (error) {
       throw new Error(error);
@@ -137,6 +139,7 @@ router.put('/:id', auth, async (req, res, next) => {
     category_id,
     user_id,
     distributor_price,
+    capital_price,
   } = req.body;
   const query = knex('Product')
       .where({id})
@@ -151,6 +154,7 @@ router.put('/:id', auth, async (req, res, next) => {
         category_id,
         user_id,
         distributor_price,
+        capital_price,
       });
   const result = await helper.knexQuery(query);
   res.status(result.status).send(result);
