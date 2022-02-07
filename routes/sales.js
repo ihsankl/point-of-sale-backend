@@ -6,6 +6,39 @@ const {auth} = require('../lib/middleware');
 // eslint-disable-next-line new-cap
 const router = express.Router();
 const dayjs = require('dayjs');
+const escpos = require('escpos');
+const htmlToText = require('html-to-text');
+escpos.USB = require('escpos-usb');
+
+// check printer status
+router.get('/printer', auth, async (req, res, next) => {
+  try {
+    const device = escpos.USB.findPrinter();
+    console.log(device);
+    if (device.length > 0) {
+      res.status(200).send({
+        status: 200,
+        message: 'Printer found',
+        success: true,
+        data: device,
+      });
+    } else {
+      res.status(200).send({
+        status: 200,
+        message: 'Printer not found',
+        success: true,
+        data: null,
+      });
+    }
+  } catch (error) {
+    res.status(503).send({
+      status: 503,
+      message: 'Internal server error',
+      success: false,
+      data: null,
+    });
+  }
+});
 
 // create sales
 router.post('/', auth, async (req, res, next) => {
@@ -234,6 +267,137 @@ router.delete('/:id', auth, async (req, res, next) => {
   });
   const result = await helper.knexQuery(query);
   res.status(result.status).send(result);
+});
+
+// print receipt
+router.post('/print', auth, async (req, res, next) => {
+  const {
+    products,
+    receipt_id,
+    operator,
+    date,
+    total,
+    change,
+    paid,
+  } = req.body;
+
+  const data = products.map((product) => {
+    const product_name = product.product_name.replace(/\(.*\)/, '').trim();
+    return {
+      product_name,
+      qty: product.qty,
+      sub_total: product.sub_total,
+    };
+  });
+
+  const table = `
+    <!doctype html>
+    <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Testing Title for table</title>
+        </head>
+        <body>
+            <div class="invoice-box">
+                <table
+                  class="receipt-table"
+                  cellpadding="0"
+                  cellspacing="0"
+                  border="0"
+                >
+                    <thead>
+                        <tr class="heading">
+                            <th>Item</th>
+                            <th>Quantity</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.map((item) =>
+    `
+                          <tr>
+                              <td>${item.product_name}</td>
+                              <td>${item.qty}</td>
+                              <td>${item.sub_total}</td>
+                          </tr>
+                          `,
+  )}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td>
+                                TOTAL:${total}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Pembayaran:${paid}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Kembalian:${change}
+                            </td>
+                        </tr>
+                    </tfoot>
+            </table>
+            </div>
+        </body>
+    </html>
+    `;
+
+  try {
+    const options = {
+      encoding: 'GB18030',
+    };
+      // encoding is optional
+
+    const device = new escpos.USB(0x9C5, 0x589E);
+    const printer = new escpos.Printer(device, options);
+    device.open(function(error) {
+      if (error) {
+        throw new Error(error);
+      }
+      const text = htmlToText.fromString(table, {
+        wordwrap: false,
+        tables: ['.receipt-box', '.receipt-table'],
+      });
+      printer
+          .font('b')
+          .align('ct')
+          .style('bu')
+          .size(.01, .01)
+          .encode('utf8')
+          .text('\n*****THIBBUL HAYAWAN*****\n\n')
+      // RECEIPT ID
+          .table(['RECEIPT # :', receipt_id])
+      // DATE
+          .table(['DATE: ', dayjs(date).format('DD/MM/YYYY')])
+          .text('----------ITEM LIST----------\n')
+      // ITEM LIST STARTS HERE
+          .text(text)
+      // ITEM LIST ENDS HERE
+          .text('--------------------------------')
+      // OPERATOR
+          .text(`Operator: ${operator}\n-------------------------------\n`)
+          .text('\nTHANK YOU\n')
+          .close();
+    });
+    res.status(200).send({
+      status: 200,
+      message: 'Receipt printed successfully',
+      success: true,
+      data: null,
+    });
+  } catch (error) {
+    console.error(error.message);
+    res.status(503).send({
+      status: 503,
+      message: 'Internal server error',
+      success: false,
+      data: null,
+    });
+  }
 });
 
 module.exports = router;
