@@ -10,36 +10,6 @@ const escpos = require('escpos');
 const htmlToText = require('html-to-text');
 escpos.USB = require('escpos-usb');
 
-// check printer status
-router.get('/printer', auth, async (req, res, next) => {
-  try {
-    const device = escpos.USB.findPrinter();
-    console.log(device);
-    if (device.length > 0) {
-      res.status(200).send({
-        status: 200,
-        message: 'Printer found',
-        success: true,
-        data: device,
-      });
-    } else {
-      res.status(200).send({
-        status: 200,
-        message: 'Printer not found',
-        success: true,
-        data: null,
-      });
-    }
-  } catch (error) {
-    res.status(503).send({
-      status: 503,
-      message: 'Internal server error',
-      success: false,
-      data: null,
-    });
-  }
-});
-
 // create sales
 router.post('/', auth, async (req, res, next) => {
   const {
@@ -273,7 +243,7 @@ router.delete('/:id', auth, async (req, res, next) => {
 router.post('/print', auth, async (req, res, next) => {
   const {
     products,
-    receipt_id,
+    receipt_id = '#1',
     operator,
     date,
     total,
@@ -350,45 +320,45 @@ router.post('/print', auth, async (req, res, next) => {
     const options = {
       encoding: 'GB18030',
     };
-      // encoding is optional
-
     const device = new escpos.USB(0x9C5, 0x589E);
-    const printer = new escpos.Printer(device, options);
-    device.open(function(error) {
-      if (error) {
-        throw new Error(error);
-      }
-      const text = htmlToText.fromString(table, {
-        wordwrap: false,
-        tables: ['.receipt-box', '.receipt-table'],
+    if (device.length > 0) {
+      const printer = new escpos.Printer(device, options);
+      device.open(function(error) {
+        if (error) {
+          throw new Error(error);
+        }
+        const text = htmlToText.fromString(table, {
+          wordwrap: false,
+          tables: ['.receipt-box', '.receipt-table'],
+        });
+        printer
+            .font('b')
+            .align('ct')
+            .style('bu')
+            .size(.01, .01)
+            .encode('utf8')
+            .text('\n*****THIBBUL HAYAWAN*****\n\n')
+        // RECEIPT ID
+            .table(['RECEIPT # :', receipt_id])
+        // DATE
+            .table(['DATE: ', dayjs(date).format('DD/MM/YYYY')])
+            .text('----------ITEM LIST----------\n')
+        // ITEM LIST STARTS HERE
+            .text(text)
+        // ITEM LIST ENDS HERE
+            .text('--------------------------------')
+        // OPERATOR
+            .text(`Operator: ${operator}\n-------------------------------\n`)
+            .text('\nTHANK YOU\n')
+            .close();
       });
-      printer
-          .font('b')
-          .align('ct')
-          .style('bu')
-          .size(.01, .01)
-          .encode('utf8')
-          .text('\n*****THIBBUL HAYAWAN*****\n\n')
-      // RECEIPT ID
-          .table(['RECEIPT # :', receipt_id])
-      // DATE
-          .table(['DATE: ', dayjs(date).format('DD/MM/YYYY')])
-          .text('----------ITEM LIST----------\n')
-      // ITEM LIST STARTS HERE
-          .text(text)
-      // ITEM LIST ENDS HERE
-          .text('--------------------------------')
-      // OPERATOR
-          .text(`Operator: ${operator}\n-------------------------------\n`)
-          .text('\nTHANK YOU\n')
-          .close();
-    });
-    res.status(200).send({
-      status: 200,
-      message: 'Receipt printed successfully',
-      success: true,
-      data: null,
-    });
+      res.status(200).send({
+        status: 200,
+        message: 'Receipt printed successfully',
+        success: true,
+        data: null,
+      });
+    }
   } catch (error) {
     console.error(error.message);
     res.status(503).send({
