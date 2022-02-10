@@ -316,6 +316,7 @@ router.post('/print', auth, async (req, res, next) => {
     </html>
     `;
 
+
   try {
     const options = {
       encoding: 'GB18030',
