@@ -151,17 +151,17 @@ router.put('/:id', async (req, res, next) => {
             .update({
               total_amount: knex.raw(
                   '`total_amount` + ?',
-                  sub_total - sales_before[0].sub_total,
+                  parseInt(sub_total) - parseInt(sales_before[0].sub_total),
               ),
             })
             .from('Invoice')
             .where({id: invoice_id});
-      } else if (sub_total > sales_before[0].sub_total) {
+      } else if (sub_total < sales_before[0].sub_total) {
         await trx
             .update({
               total_amount: knex.raw(
                   '`total_amount` - ?',
-                  sub_total - sales_before[0].sub_total,
+                  parseInt(sub_total) + parseInt(sales_before[0].sub_total),
               ),
             })
             .from('Invoice')
@@ -172,23 +172,22 @@ router.put('/:id', async (req, res, next) => {
             .update({
               unit_in_stock: knex.raw(
                   '`unit_in_stock` - ?',
-                  qty - sales_before[0].qty,
+                  parseInt(qty) - parseInt(sales_before[0].qty),
               ),
             })
             .from('Product')
             .where({id: product_id});
-      } else if (qty < sales_before[0].qty) {
+      } else if (qty > sales_before[0].qty) {
         await trx
             .update({
               unit_in_stock: knex.raw(
                   '`unit_in_stock` + ?',
-                  sales_before[0].qty - qty,
+                  parseInt(qty) + parseInt(sales_before[0].qty),
               ),
             })
             .from('Product')
             .where({id: product_id});
       }
-
       return await trx('Sales')
           .where({id})
           .update({qty, unit_price, sub_total, invoice_id, product_id});
