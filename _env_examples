@@ -1,7 +1,0 @@
-PORT=5000
-DB_HOST=172.18.0.3
-DB_USER=admin
-DB_DATABASE=point-of-sale
-DB_PASSWORD=admin
-APP_KEY=myveryscretkey
-APP_BASEURL=http://localhost:5000
